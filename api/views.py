@@ -38,3 +38,37 @@ class SimularEtapa1View(APIView):
             
         except Exception as e:
             return Response({"erro": True, "mensagem": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class CadastrarDadosPessoaisView(APIView):
+    def post(self, request):
+        try:
+            cliente = FactaCreditoClient()
+            resultado = cliente.cadastrar_dados_pessoais(dados_pessoais=request.data)
+            return Response(resultado, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"erro": True, "mensagem": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GerarPropostaView(APIView):
+    def post(self, request):
+        codigo_cliente = request.data.get('codigo_cliente')
+        id_simulador = request.data.get('id_simulador')
+        tipo_formalizacao = request.data.get('tipo_formalizacao', 'DIG')
+        
+        try:
+            cliente = FactaCreditoClient()
+            resultado = cliente.gerar_proposta(codigo_cliente, id_simulador, tipo_formalizacao)
+            return Response(resultado, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"erro": True, "mensagem": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class EnviarLinkFormalizacaoView(APIView):
+    def post(self, request):
+        codigo_af = request.data.get('codigo_af')
+        tipo_envio = request.data.get('tipo_envio', 'sms')
+        
+        try:
+            cliente = FactaCreditoClient()
+            resultado = cliente.enviar_link_formalizacao(codigo_af, tipo_envio)
+            return Response(resultado, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"erro": True, "mensagem": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

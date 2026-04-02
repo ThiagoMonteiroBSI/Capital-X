@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from integracoes.facta_credito.client import FactaCreditoClient
+from .serializers import SimularEtapa1Serializer
 
 class OperacoesDisponiveisView(APIView):
     def get(self, request):
@@ -30,10 +31,14 @@ class OperacoesDisponiveisView(APIView):
 
 class SimularEtapa1View(APIView):
     def post(self, request):
-        dados_front = request.data
+        serializer = SimularEtapa1Serializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             cliente = FactaCreditoClient()
-            resultado = cliente.simular_etapa_1(dados_simulacao=dados_front)
+            resultado = cliente.simular_etapa_1(dados_simulacao=serializer.validated_data)
             return Response(resultado, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -63,12 +68,19 @@ class GerarPropostaView(APIView):
 
 class EnviarLinkFormalizacaoView(APIView):
     def post(self, request):
-        codigo_af = request.data.get('codigo_af')
-        tipo_envio = request.data.get('tipo_envio', 'sms')
-        
+        serializer = EnviarLinkFormalizacaoSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
         try:
             cliente = FactaCreditoClient()
+            
+            codigo_af = serializer.validated_data['codigo_af']
+            # Como agora o tipo_envio é garantido pelo serializer, acessamos diretamente!
+            tipo_envio = serializer.validated_data['tipo_envio'] 
+            
             resultado = cliente.enviar_link_formalizacao(codigo_af, tipo_envio)
             return Response(resultado, status=status.HTTP_200_OK)
+            
         except Exception as e:
             return Response({"erro": True, "mensagem": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

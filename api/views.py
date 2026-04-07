@@ -76,7 +76,6 @@ class EnviarLinkFormalizacaoView(APIView):
             cliente = FactaCreditoClient()
             
             codigo_af = serializer.validated_data['codigo_af']
-            # Como agora o tipo_envio é garantido pelo serializer, acessamos diretamente!
             tipo_envio = serializer.validated_data['tipo_envio'] 
             
             resultado = cliente.enviar_link_formalizacao(codigo_af, tipo_envio)

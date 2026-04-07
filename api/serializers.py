@@ -81,4 +81,10 @@ class EnviarLinkFormalizacaoSerializer(serializers.Serializer):
     codigo_af = serializers.CharField() # id da proposta 
     tipo_envio = serializers.CharField() # pdf pede SIM (obrigatorio)
 
+class NVCheckSerializer(serializers.Serializer):
+    #Valida a requisição para a consulta da nova vida ti, cpf (11) ou cnpj (14) - thigas
+    documento = serializers.CharField(min_length=11, max_length=14)
+
+
+
     #ARRUMAR OU RETIRAR OS COMENTARIOS ANTES DA ENTREGA (NAO ESQUECER)

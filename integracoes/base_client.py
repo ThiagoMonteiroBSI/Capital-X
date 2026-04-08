@@ -25,7 +25,7 @@ class BaseFactaClient:
             'Authorization': f'Basic {credenciais_b64}'
         }
 
-        # Faz a requisição GET para pegar o token - Thiago
+        # Faz a requisição get para pegar o token - Thiagop
         response = requests.get(url, headers=headers)
         
         response.raise_for_status()
@@ -34,7 +34,7 @@ class BaseFactaClient:
         
         if not dados.get('erro') and 'token' in dados:
             token = dados['token']
-            #time do token de login, 55 minutos
+            #tempo do token de login, 55 minutos até espirar
             cache.set(self.cache_key, token, timeout=3300)
             return token
         else:

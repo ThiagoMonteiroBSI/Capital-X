@@ -2,7 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from integracoes.facta_credito.client import FactaCreditoClient
-from .serializers import SimularEtapa1Serializer
+from .serializers import SimularEtapa1Serializer, CadastrarDadosPessoaisSerializer, GerarPropostaSerializer, EnviarLinkFormalizacaoSerializer,NVCheckSerializer
+
+from integracoes.nova_vida.client import NovaVidaClient
 
 class OperacoesDisponiveisView(APIView):
     def get(self, request):
@@ -76,10 +78,27 @@ class EnviarLinkFormalizacaoView(APIView):
             cliente = FactaCreditoClient()
             
             codigo_af = serializer.validated_data['codigo_af']
-            # Como agora o tipo_envio é garantido pelo serializer, acessamos diretamente!
             tipo_envio = serializer.validated_data['tipo_envio'] 
             
             resultado = cliente.enviar_link_formalizacao(codigo_af, tipo_envio)
+            return Response(resultado, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({"erro": True, "mensagem": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class ConsultarNVCheckView(APIView):
+ 
+    def post(self, request):
+        serializer = NVCheckSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            cliente = NovaVidaClient()
+            documento = serializer.validated_data['documento']
+            resultado = cliente.consultar_nvcheck(documento)
+            
             return Response(resultado, status=status.HTTP_200_OK)
             
         except Exception as e:

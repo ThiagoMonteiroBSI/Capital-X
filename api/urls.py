@@ -4,7 +4,8 @@ from .views import (
     SimularEtapa1View,
     CadastrarDadosPessoaisView,
     GerarPropostaView,
-    EnviarLinkFormalizacaoView
+    EnviarLinkFormalizacaoView,
+    ConsultarNVCheckView
 )
 
 urlpatterns = [
@@ -13,4 +14,5 @@ urlpatterns = [
     path('cadastrar-dados/', CadastrarDadosPessoaisView.as_view(), name='cadastrar-dados'),
     path('gerar-proposta/', GerarPropostaView.as_view(), name='gerar-proposta'),
     path('enviar-link/', EnviarLinkFormalizacaoView.as_view(), name='enviar-link'),
+    path('consulta-nvcheck/', ConsultarNVCheckView.as_view(), name='consulta-nvcheck'),
 ]

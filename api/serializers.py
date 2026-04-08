@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 class SimularEtapa1Serializer(serializers.Serializer):
-    # Campos obrigatórios 
+    # Campos obrigatórios - Thiago
     cpf = serializers.CharField(max_length=11, min_length=11)
     data_nascimento = serializers.CharField(max_length=10)
     login_certificado = serializers.CharField()
@@ -11,16 +11,16 @@ class SimularEtapa1Serializer(serializers.Serializer):
     valor_parcela = serializers.FloatField()
     coeficiente = serializers.FloatField()
     
-    # Campos opcionais 
+    # Campos opcionais - Thiago
     vendedor = serializers.CharField(required=False, allow_blank=True)
     codigo_master = serializers.IntegerField(required=False)
     gerente_comercial = serializers.IntegerField(required=False)
 
 
 class CadastrarDadosPessoaisSerializer(serializers.Serializer):
-    # Campos obrigatórios da Etapa 2 
-    id_simulador = serializers.IntegerField() # PDF pede int 
-    cpf = serializers.CharField(max_length=11, min_length=11) # Mantido char para não perder zero à esquerda
+    # Campos obrigatórios para a  Etapa 2 - Thiago
+    id_simulador = serializers.IntegerField() # PDF da Facta ta pedindp int 
+    cpf = serializers.CharField(max_length=11, min_length=11) 
     nome = serializers.CharField()
     sexo = serializers.CharField(max_length=1)
     estado_civil = serializers.IntegerField()
@@ -33,7 +33,7 @@ class CadastrarDadosPessoaisSerializer(serializers.Serializer):
     cidade_natural = serializers.IntegerField()
     nacionalidade = serializers.IntegerField()
     celular = serializers.CharField()
-    renda = serializers.IntegerField() # PDF pede int 
+    renda = serializers.IntegerField() # PDF da Factapede int 
     cep = serializers.CharField()
     endereco = serializers.CharField()
     numero = serializers.IntegerField()
@@ -48,13 +48,13 @@ class CadastrarDadosPessoaisSerializer(serializers.Serializer):
     banco = serializers.IntegerField()
     agencia = serializers.IntegerField()
     conta = serializers.CharField()
-    matricula = serializers.CharField() # Mantido char pois PDF dá exemplo alfanumérico "ABC123" 
+    matricula = serializers.CharField() # Mantido char pois PDF dá exemplo de ABC123 - Thiago
     cnpj_empregador = serializers.CharField()
     data_admissao = serializers.CharField(max_length=10)
-    tipo_chave_pix = serializers.IntegerField() # PDF pede SIM (obrigatório) 
-    chave_pix = serializers.CharField() # PDF pede SIM (obrigatório) 
+    tipo_chave_pix = serializers.IntegerField() # PDF da facta pede SIM (obrigatori)
+    chave_pix = serializers.CharField() # PDF da facta pede SIM  
     
-    # Campos opcionais ou condicionais 
+    # opcionais ou condicionais -  Thiago
     pais_origem = serializers.IntegerField(required=False)
     complemento = serializers.CharField(required=False, allow_blank=True)
     banco_pagamento = serializers.IntegerField(required=False)
@@ -62,7 +62,7 @@ class CadastrarDadosPessoaisSerializer(serializers.Serializer):
     conta_pagamento = serializers.CharField(required=False, allow_blank=True)
     email = serializers.EmailField(required=False, allow_blank=True)
     
-    # Dados obrigatórios APENAS se cliente_iletrado_impossibilitado == "S" 
+    # Campos obrigatorios se o cliente for analfabeto == S - Thiago1
     nome_a_rogo = serializers.CharField(required=False, allow_blank=True)
     cpf_a_rogo = serializers.CharField(required=False, allow_blank=True)
     nome_a_rogo_testemunha = serializers.CharField(required=False, allow_blank=True)
@@ -70,13 +70,21 @@ class CadastrarDadosPessoaisSerializer(serializers.Serializer):
 
 
 class GerarPropostaSerializer(serializers.Serializer):
-    # Campos da Etapa 3 [cite: 479, 485, 488]
-    codigo_cliente = serializers.IntegerField() # PDF pede int 
-    id_simulador = serializers.IntegerField() # PDF pede int 
-    tipo_formalizacao = serializers.CharField(required=False, default="DIG") # PRE ou DIG, opcional [cite: 485, 488, 489]
+    # Campos da Etapa 3 - Thiago
+    codigo_cliente = serializers.IntegerField() 
+    id_simulador = serializers.IntegerField() 
+    tipo_formalizacao = serializers.CharField(required=False, default="DIG") # opcional 
 
 
 class EnviarLinkFormalizacaoSerializer(serializers.Serializer):
-    # Campos do Envio de Link 
-    codigo_af = serializers.CharField() # ID da proposta 
-    tipo_envio = serializers.CharField() # PDF pede SIM (obrigatório)
+    # Campos para o envio do link - Thiago 
+    codigo_af = serializers.CharField() # id da proposta 
+    tipo_envio = serializers.CharField() # pdf pede SIM (obrigatorio)
+
+class NVCheckSerializer(serializers.Serializer):
+    #Valida a requisição para a consulta da nova vida ti, cpf (11) ou cnpj (14) - thigas
+    documento = serializers.CharField(min_length=11, max_length=14)
+
+
+
+    #ARRUMAR OU RETIRAR OS COMENTARIOS ANTES DA ENTREGA (NAO ESQUECER)

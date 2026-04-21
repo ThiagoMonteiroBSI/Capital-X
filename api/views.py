@@ -2,9 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from integracoes.facta_credito.client import FactaCreditoClient
-from .serializers import SimularEtapa1Serializer, CadastrarDadosPessoaisSerializer, GerarPropostaSerializer, EnviarLinkFormalizacaoSerializer,NVCheckSerializer
-
-from integracoes.nova_vida.client import NovaVidaClient
+from .serializers import SimularEtapa1Serializer, CadastrarDadosPessoaisSerializer, GerarPropostaSerializer, EnviarLinkFormalizacaoSerializer, NVCheckSerializer
+from integracoes.nova_vida.cliente import NovaVidaClient
 
 class OperacoesDisponiveisView(APIView):
     def get(self, request):
@@ -29,7 +28,6 @@ class OperacoesDisponiveisView(APIView):
         
         except Exception as e:
             return Response({"erro": True, "mensagem": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class SimularEtapa1View(APIView):
     def post(self, request):
@@ -87,7 +85,6 @@ class EnviarLinkFormalizacaoView(APIView):
             return Response({"erro": True, "mensagem": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class ConsultarNVCheckView(APIView):
- 
     def post(self, request):
         serializer = NVCheckSerializer(data=request.data)
         

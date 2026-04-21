@@ -1,79 +1,135 @@
-from integracoes.base_client import BaseFactaClient
+import os
+import requests
+from requests.exceptions import RequestException, Timeout
+from django.core.cache import cache
 
-class FactaCreditoClient(BaseFactaClient):
-
-    def consultar_ofertas(self, cpf: str):
-        endpoint = "/consignado-trabalhador/consulta-ofertas"
-        parametros = {"cpf": cpf} 
+class FactaCreditoClient:
+    def __init__(self):
+        self.base_url = os.getenv('FACTA_URL', 'https://webservice.facta.com.br')
+        self.basic_token = os.getenv('FACTA_BASIC_TOKEN')
         
-        return self._fazer_requisicao("GET", endpoint, params=parametros)
+        if not self.basic_token:
+            raise ValueError(
+                "Credencial FACTA_BASIC_TOKEN ausente! Verifique o arquivo .env."
+            )
+            
+        self.cache_key = 'facta_token'
+        self.session = requests.Session()
+        self.timeout = 15
 
-    def operacoes_disponiveis(self, cpf: str, data_nascimento: str, valor_renda: float, valor_parcela: float = None, prazo: int = None):
-        endpoint = "/proposta/operacoes-disponiveis"
+    def _gerar_token(self):
+        url = f"{self.base_url}/gera-token"
+        headers = {
+            'Authorization': f'Basic {self.basic_token}'
+        }
         
-        parametros = {
-            "produto": "D",
-            "tipo_operacao": 13,
-            "averbador": 10010,
-            "convenio": 3,
-            "opcao_valor": 1 if valor_parcela is None else 2, 
-            "cpf": cpf,
-            "data_nascimento": data_nascimento,
-            "valor_renda": valor_renda
+        try:
+            response = self.session.get(url, headers=headers, timeout=self.timeout)
+            response.raise_for_status()
+            dados = response.json()
+            
+            if dados.get('erro'):
+                raise Exception(dados.get('mensagem', 'Erro desconhecido ao gerar token FACTA'))
+                
+            token = dados['token']
+            cache.set(self.cache_key, token, timeout=3500)
+            return token
+            
+        except Timeout:
+            raise Exception("Timeout: A API da Facta demorou muito para responder na geração do token.")
+        except RequestException as e:
+            raise Exception(f"Erro de comunicação com a Facta (Token): {str(e)}")
+
+    def get_headers(self):
+        token = cache.get(self.cache_key)
+        if not token:
+            token = self._gerar_token()
+            
+        return {
+            'Authorization': f'Bearer {token}'
         }
 
-        if valor_parcela:
-            parametros["valor_parcela"] = valor_parcela
-        if prazo:
-            parametros["prazo"] = prazo
+    def operacoes_disponiveis(self, cpf, data_nascimento, valor_renda):
+        url = f"{self.base_url}/proposta/operacoes-disponiveis"
+        headers = self.get_headers()
+        
+        params = {
+            'produto': 'D',
+            'tipo_operacao': 13,
+            'averbador': 10010,
+            'convenio': 3,
+            'opcao_valor': 1,
+            'cpf': cpf,
+            'data_nascimento': data_nascimento,
+            'valor_renda': valor_renda
+        }
+        
+        try:
+            response = self.session.get(url, headers=headers, params=params, timeout=self.timeout)
+            response.raise_for_status()
+            return response.json()
+        except RequestException as e:
+            raise Exception(f"Erro ao consultar operações na Facta: {str(e)}")
 
-        return self._fazer_requisicao("GET", endpoint, params=parametros)
-
-    def simular_etapa_1(self, dados_simulacao: dict):
-        endpoint = "/proposta/etapa1-simulador"
-              
+    def simular_etapa_1(self, dados_simulacao):
+        url = f"{self.base_url}/proposta/etapa1-simulador"
+        headers = self.get_headers()
+        
         payload = {
-            "produto": "D",
-            "tipo_operacao": 13,
-            "averbador": 10010,
-            "convenio": 3,
-            "cpf": dados_simulacao.get("cpf"),
-            "data_nascimento": dados_simulacao.get("data_nascimento"),  
-            "login_certificado": dados_simulacao.get("login_certificado"), 
-            "codigo_tabela": dados_simulacao.get("codigo_tabela"),
-            "prazo": dados_simulacao.get("prazo"), 
-            "valor_operacao": dados_simulacao.get("valor_operacao"), 
-            "valor_parcela": dados_simulacao.get("valor_parcela"), 
-            "coeficiente": dados_simulacao.get("coeficiente") 
+            'produto': 'D',
+            'tipo_operacao': 13,
+            'averbador': 10010,
+            'convenio': 3,
         }
+        payload.update(dados_simulacao)
         
-        if "vendedor" in dados_simulacao:
-            payload["vendedor"] = dados_simulacao["vendedor"]
+        try:
+            response = self.session.post(url, headers=headers, data=payload, timeout=self.timeout)
+            response.raise_for_status()
+            return response.json()
+        except RequestException as e:
+            raise Exception(f"Erro na simulação Etapa 1: {str(e)}")
 
-        return self._fazer_requisicao("POST", endpoint, data=payload)
-
-    def cadastrar_dados_pessoais(self, dados_pessoais: dict):
-        endpoint = "/proposta/etapa2-dados-pessoais"
+    def cadastrar_dados_pessoais(self, dados_pessoais):
+        url = f"{self.base_url}/proposta/etapa2-dados-pessoais"
+        headers = self.get_headers()
         
-        return self._fazer_requisicao("POST", endpoint, data=dados_pessoais)
+        try:
+            response = self.session.post(url, headers=headers, data=dados_pessoais, timeout=self.timeout)
+            response.raise_for_status()
+            return response.json()
+        except RequestException as e:
+            raise Exception(f"Erro ao cadastrar dados pessoais: {str(e)}")
 
-    def gerar_proposta(self, codigo_cliente: str, id_simulador: str, tipo_formalizacao: str = "DIG"):
-        endpoint = "/proposta/etapa3-proposta-cadastro"
+    def gerar_proposta(self, codigo_cliente, id_simulador, tipo_formalizacao):
+        url = f"{self.base_url}/proposta/etapa3-proposta-cadastro"
+        headers = self.get_headers()
         
         payload = {
-            "codigo_cliente": codigo_cliente,
-            "id_simulador": id_simulador,
-            "tipo_formalizacao": tipo_formalizacao
+            'codigo_cliente': codigo_cliente,
+            'id_simulador': id_simulador,
+            'tipo_formalizacao': tipo_formalizacao
         }
         
-        return self._fazer_requisicao("POST", endpoint, data=payload)
+        try:
+            response = self.session.post(url, headers=headers, data=payload, timeout=self.timeout)
+            response.raise_for_status()
+            return response.json()
+        except RequestException as e:
+            raise Exception(f"Erro ao gerar proposta: {str(e)}")
 
-    def enviar_link_formalizacao(self, codigo_af: str, tipo_envio: str = "sms"):
-        endpoint = "/proposta/envio-link"
+    def enviar_link_formalizacao(self, codigo_af, tipo_envio):
+        url = f"{self.base_url}/proposta/envio-link"
+        headers = self.get_headers()
         
         payload = {
-            "codigo_af": codigo_af,
-            "tipo_envio": tipo_envio
+            'codigo_af': codigo_af,
+            'tipo_envio': tipo_envio
         }
         
-        return self._fazer_requisicao("POST", endpoint, data=payload)
+        try:
+            response = self.session.post(url, headers=headers, data=payload, timeout=self.timeout)
+            response.raise_for_status()
+            return response.json()
+        except RequestException as e:
+            raise Exception(f"Erro ao enviar link de formalização: {str(e)}")
